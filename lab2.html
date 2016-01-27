@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="d3js/d3.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>A2
+  </title>
+</head>
+<body>
+      <script type="text/javascript">
+          
+			var svg = d3.select("svg")
+				d3.csv("http://www.sfu.ca/~yitingl/data.csv")
+				.row(function(d){
+					return d;
+				})
+				.get(function(error, points){
+					operations(points);
+				})
+				/*var dimension_details = {
+					"Total 2000" : "number"
+				}*/
+				function operations(array){
+				
+				console.log(array.length);
+					d3.select("body")
+						.append("h2")
+						.text("Proportion of the population using improved drinking water sources (%) of " + array.length + " countries");
+					var max1 = d3.max(array, function(d){
+						return +d["Total 2000"];
+					});
+					var min1 = d3.min(array, function(d){
+						return +d["Total 2000"];
+					});
+					var sum1 = d3.sum(array, function(d){
+						return +d["Total 2000"];
+					});
+					
+					var mean1 = d3.mean(array, function(d){
+						return +d["Total 2000"];
+					});
+					
+					var median1 = d3.median(array, function(d){
+						return +d["Total 2000"];
+					});
+					
+					d3.select("body")
+						.append("h3")
+						.text("Country Total of the Year 2000");
+					d3.select("body")
+						.append("p")
+						.text("Max: " + max1 + 
+							" Min:" + min1 + 
+							" Sum: " + sum1 + 
+							" Mean: " + mean1.toFixed(2) +
+							" Median: " + median1
+							);
+	
+						
+					var max2 = d3.max(array, function(d){
+						return +d["Total 2010"];
+					});
+					var min2 = d3.min(array, function(d){
+						return +d["Total 2010"];
+					});
+					console.log("Max of Total 2010 = " + max2 + "\n" + "Min of Total 2010 = " + min2 );
+					
+					var max3 = d3.max(array, function(d){
+						return +d["Urban 2000"];
+					});
+					var min3 = d3.min(array, function(d){
+						return +d["Urban 2000"];
+					});
+					console.log("Max of Urban 2000 = " + max3 + "\n" + "Min of Urban 2000 = " + min3 );
+					
+					var max4 = d3.max(array, function(d){
+						return +d["Urban 2010"];
+					});
+					var min4 = d3.min(array, function(d){
+						return +d["Urban 2010"];
+					});
+					console.log("Max of Urban 2010 = " + max4 + "\n" + "Min of Urban 2010 = " + min4 );
+					
+	
+				}
+        </script>
+</body>
+</html>
