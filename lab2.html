@@ -1,89 +1,166 @@
 <!DOCTYPE html>
 <html>
-<head>
-<script type="text/javascript" src="d3js/d3.min.js"></script>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>A2
-  </title>
-</head>
-<body>
-      <script type="text/javascript">
-          
-			var svg = d3.select("svg")
-				d3.csv("http://www.sfu.ca/~yitingl/data.csv")
+	<head>
+		<script type="text/javascript" src="d3js/d3.min.js"></script>
+		  <meta charset="utf-8">
+		  <meta name="viewport" content="width=device-width">
+		  <title>Assignment 2 Group 2</title>
+	</head>
+	<body>
+		<script type="text/javascript">
+			
+			//load dataset from web
+			d3.csv("http://www.sfu.ca/~yitingl/data.csv")
 				.row(function(d){
 					return d;
-				})
+				})//end of row
 				.get(function(error, points){
-					operations(points);
-				})
-				/*var dimension_details = {
-					"Total 2000" : "number"
-				}*/
-				function operations(array){
-				
-				console.log(array.length);
+					//print title of the dataset and the sample size
 					d3.select("body")
 						.append("h2")
-						.text("Proportion of the population using improved drinking water sources (%) of " + array.length + " countries");
-					var max1 = d3.max(array, function(d){
-						return +d["Total 2000"];
-					});
-					var min1 = d3.min(array, function(d){
-						return +d["Total 2000"];
-					});
-					var sum1 = d3.sum(array, function(d){
+						.text("Proportion of the population using improved drinking water sources (%) of " +
+						points.length + 
+						" countries");
+						
+					//call operation function, passing dataset as argument
+					operations(points);
+				})//end of get
+				
+			//take dataset as parameter and calculate min, max, median and mean for each column
+			//sum is not calculated since sum of percentage does not make sense to this dataset
+			function operations(array){
+				//calculations for the country total of the year 2000
+					
+					//max value calculation
+					var maxTotal2000 = d3.max(array, function(d){
 						return +d["Total 2000"];
 					});
 					
-					var mean1 = d3.mean(array, function(d){
+					//min value calculation
+					var minTotal2000 = d3.min(array, function(d){
 						return +d["Total 2000"];
 					});
 					
-					var median1 = d3.median(array, function(d){
+					//mean value calculation
+					var meanTotal2000 = d3.mean(array, function(d){
 						return +d["Total 2000"];
 					});
 					
+					//median value calculation
+					var medianTotal2000 = d3.median(array, function(d){
+						return +d["Total 2000"];
+					});
+					
+					//print out the result for the country total of year 2000
 					d3.select("body")
 						.append("h3")
-						.text("Country Total of the Year 2000");
+						.text("Country total of year 2000");
 					d3.select("body")
 						.append("p")
-						.text("Max: " + max1 + 
-							" Min:" + min1 + 
-							" Sum: " + sum1 + 
-							" Mean: " + mean1.toFixed(2) +
-							" Median: " + median1
+						.text("Max: " + maxTotal2000 + 
+							" Min:" + minTotal2000 + 
+							" Mean: " + meanTotal2000.toFixed(2) +
+							" Median: " + medianTotal2000
 							);
-	
+				//end of country total of year 2000
 						
-					var max2 = d3.max(array, function(d){
+				//calcuations for the country total of year 2010
+					
+					//max value calculation
+					var maxTotal2010 = d3.max(array, function(d){
 						return +d["Total 2010"];
 					});
-					var min2 = d3.min(array, function(d){
+					//min value calculation
+					var minTotal2010 = d3.min(array, function(d){
 						return +d["Total 2010"];
 					});
-					console.log("Max of Total 2010 = " + max2 + "\n" + "Min of Total 2010 = " + min2 );
+					//mean value calculation
+					var meanTotal2010 = d3.mean(array, function(d){
+						return +d["Total 2010"];
+					});
 					
-					var max3 = d3.max(array, function(d){
+					//median value calculation
+					var medianTotal2010 = d3.median(array, function(d){
+						return +d["Total 2010"];
+					});
+					
+					//print out the result of country total of year 2010
+					d3.select("body")
+						.append("h3")
+						.text("Country total of year 2010");
+					d3.select("body")
+						.append("p")
+						.text("Max: " + maxTotal2010 + 
+							" Min:" + minTotal2010 + 
+							" Mean: " + meanTotal2010.toFixed(2) +
+							" Median: " + medianTotal2010
+							);
+				//end of country total of year 2010
+				
+				//calcuation for the urban areas of year 2000
+					
+					//max value calculation
+					var maxUrban2000 = d3.max(array, function(d){
 						return +d["Urban 2000"];
 					});
-					var min3 = d3.min(array, function(d){
+					//min value calculation
+					var minUrban2000 = d3.min(array, function(d){
 						return +d["Urban 2000"];
 					});
-					console.log("Max of Urban 2000 = " + max3 + "\n" + "Min of Urban 2000 = " + min3 );
+					//mean value calculation
+					var meanUrban2000 = d3.mean(array, function(d){
+						return +d["Urban 2000"];
+					});
+					//median value calculation
+					var medianUrban2000 = d3.median(array, function(d){
+						return +d["Urban 2000"];
+					});
+					//print out the result for the urban area of year 2000
+					d3.select("body")
+						.append("h3")
+						.text("Urban areas in countries of year 2000");
+					d3.select("body")
+						.append("p")
+						.text("Max: " + maxUrban2000 + 
+							" Min:" + minUrban2000 + 
+							" Mean: " + meanUrban2000.toFixed(2) +
+							" Median: " + medianUrban2000
+							);
+							
+				//end of urban areas of year 2000
+				
+				//calculations for urban areas of year 2010
 					
-					var max4 = d3.max(array, function(d){
+					//max value calculation
+					var maxUrban2010 = d3.max(array, function(d){
 						return +d["Urban 2010"];
 					});
-					var min4 = d3.min(array, function(d){
+					//min value calculation
+					var minUrban2010 = d3.min(array, function(d){
 						return +d["Urban 2010"];
 					});
-					console.log("Max of Urban 2010 = " + max4 + "\n" + "Min of Urban 2010 = " + min4 );
-					
-	
-				}
-        </script>
-</body>
+					//mean value calculation
+					var meanUrban2010 = d3.mean(array, function(d){
+						return +d["Urban 2010"];
+					});
+					//median value calculation
+					var medianUrban2010 = d3.median(array, function(d){
+						return +d["Urban 2010"];
+					});
+					//print out the result of urban areas of year 2010
+					d3.select("body")
+						.append("h3")
+						.text("Urban areas in countries of year 2010");
+					d3.select("body")
+						.append("p")
+						.text("Max: " + maxUrban2010 + 
+							" Min:" + minUrban2010 + 
+							" Mean: " + meanUrban2010.toFixed(2) +
+							" Median: " + medianUrban2010
+							);
+				//end of urban areas of year 2010	
+			}// end of operation
+			
+		</script>
+	</body>
 </html>
