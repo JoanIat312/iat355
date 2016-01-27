@@ -29,45 +29,60 @@
 			//take dataset as parameter and calculate min, max, median and mean for each column
 			//sum is not calculated since sum of percentage does not make sense to this dataset
 			function operations(array){
-				var keyArray = d3.keys(array[1]);
-				var max, min, mean, median;
-					//console.log(keyArray.length);
-				for(i = 1; i < keyArray.length; i++){
 				
+				//load the all keys of the dataset into an array
+				var keyArray = d3.keys(array[1]);
+				//check for empty array and prompt alert if yes
+				if (array.length === 0){
+					alert("Empty Array!");
+				}
+				//initializing local variables
+				var max, min, mean, median;
+				
+				//loop through dataset using all keys except the country key
+				for(i = 1; i < keyArray.length; i++){
+					//print out the key of the current column
 					d3.select("body")
 							.append("h3")
 							.text(keyArray[i]);
-							
+					
+					//calculate the max	of the current column	
 					max = d3.max(array, function(d){
 						return +d[keyArray[i]];
 					});
+					//print out the result
 					d3.select("body")
 						.append("p")
 						.text("Max:" + max);
-						
+					
+					//calculate the min of the current column	
 					min = d3.min(array, function(d){
 						return +d[keyArray[i]];
 					});
+					//print out the result
 					d3.select("body")
 						.append("p")
 						.text("Min: " + min);
 					
+					//calculate the mean of the current column
 					mean = d3.mean(array, function(d){
 						return +d[keyArray[i]];
 					});
+					//print out the result in 2 decimal points
 					d3.select("body")
 						.append("p")
 						.text("Mean:" + mean.toFixed(2));
-						
+					
+					//calculate the median of the current column
 					median = d3.min(array, function(d){
 						return +d[keyArray[i]];
 					});
+					//print out the result
 					d3.select("body")
 						.append("p")
 						.text("Median: " + median);
-				}
-			}// end of operation
-			
+				}//end of for
+			}// end of operation	
 		</script>
 	</body>
 </html>
