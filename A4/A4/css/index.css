@@ -1,0 +1,47 @@
+html, body
+{
+    height: 100%;
+}
+
+div.svg-container {
+  text-align: center;
+	
+}
+
+svg {
+	width:90%;
+	height:700px;
+	border: thin solid #ccc;
+	font-size: 10px;
+}
+
+
+path {
+	fill: none;
+	stroke-opacity:0.4;
+}
+
+
+.axis{
+	fill: none;
+	stroke: #000;
+	
+}
+
+.legend{
+	font-size: 13px;
+}
+
+.size-label{
+	text-anchor: end;
+	font-weight: bold;
+}
+
+.axis-label{
+	font-size: 12px;
+	font-weight: bold;
+}
+
+.brush{
+	opacity: 0.9;
+}
