@@ -6,7 +6,7 @@ var scale;
 var dataset = [];
 var selectedCountry;
 //load dataset from web
-	d3.csv("http://www.sfu.ca/~yitingl/data2.csv")
+	d3.csv("http://www.sfu.ca/~yitingl/data/national.csv")
 		.row(function(d){
 			return d;
 		})
@@ -21,6 +21,7 @@ var selectedCountry;
 				visualization();
 				drawScale(svg, dataset);
 				drawPath(dataset);
+  
 			}
 		});//end of row
 		
@@ -32,111 +33,46 @@ var selectedCountry;
 			keyArray = d3.keys(points[0]);
 			document.getElementsByTagName("h2")[0].innerHTML = keyArray[11];
 			console.log(keyArray);
-			for(var i = 0; i < keyArray.length-1; i++){
-				
-				scale = d3.scale.linear()
+            
+            scale = d3.scale.linear()
 				.domain([100, 0])
 				.range([650, 50]);
-				
-				axisArray[i] = d3.svg.axis()
+            var axis = d3.svg.axis()
 				.orient("left")
 				.scale(scale)
 				svg.append("g")
 				.attr("class", "axis")
-				.attr("transform", "translate(" + (100 + i*120) + ", 0)")
-				.call(axisArray[i]);
+				.attr("transform", "translate(" + (100) + ", 0)")
+				.call(axis);
+                var max, min;
+			for(var i = 1; i < keyArray.length-1; i++){
+				 max = d3.max(points, function(d){
+						return +d[keyArray[i]];
+					});
+                   min = d3.min(points, function(d){
+						return +d[keyArray[i]];
+					});
+                    console.log(min, max);
+				
+				svg.append("line")
+				.attr({
+                    x1:100 + i * 100,
+                    y1:50,
+                    x2:100 + i * 100,
+                    y2:650,
+                    "stroke-width": 2,
+                    stroke:"#5184AF",
+                    "stroke-linecap":"round",
+                    "stroke-dasharray":"1, 10"
+                });
 				
 				svg.append("text")
 				.attr({
-					x: 90 + i *120,
+					x: 90 + i *100,
 					y: 670,
 					class:"filter_label"
 				})
 				.text(keyArray[i])
-				
-				//---------------------------//
-				/*
-				var minCountry2010 = d3.min(points, function(d){
-					return +d[keyArray[2]];
-				});
-				var maxCountry2010 = d3.max(points, function(d){
-					return +d[keyArray[2]];
-				});
-				
-				country2010Scale = d3.scale.linear()
-				.domain([minCountry2010, maxCountry2010])
-				.range([20, 1350]);
-				
-				country2010Axis = d3.svg.axis()
-				.scale(country2010Scale)
-				svg.append("g")
-				.attr("class", "axis")
-				.attr("transform", "translate(0, 300)")
-				.call(country2010Axis);
-				
-				svg.append("text")
-				.attr({
-					x:20,
-					y:330,
-					class:"filter_label"
-				})
-				.text("Country total for year 2010")
-				//-----------------------//
-				
-				var minUrban2000 = d3.min(points, function(d){
-					return +d[keyArray[3]];
-				});
-				var maxUrban2000 = d3.max(points, function(d){
-					return +d[keyArray[3]];
-				});
-				
-				urban2000Scale = d3.scale.linear()
-				.domain([minUrban2000, maxUrban2000])
-				.range([20, 1350]);
-				
-				urban2000Axis = d3.svg.axis()
-				.scale(urban2000Scale)
-				svg.append("g")
-				.attr("class", "axis")
-				.attr("transform", "translate(0, 360)")
-				.call(urban2000Axis);
-				
-				svg.append("text")
-				.attr({
-					x:20,
-					y:350,
-					class:"filter_label"
-				})
-				.text("Urban total for year 2000")
-				
-				//---------------------------------------//
-				
-				var minUrban2010 = d3.min(points, function(d){
-					return +d[keyArray[4]];
-				});
-				var maxUrban2010 = d3.max(points, function(d){
-					return +d[keyArray[4]];
-				});
-				
-				urban2010Scale = d3.scale.linear()
-				.domain([minUrban2010, maxUrban2010])
-				.range([20, 1350]);
-				
-				urban2010Axis = d3.svg.axis()
-				.scale(country2010Scale)
-				svg.append("g")
-				.attr("class", "axis")
-				.attr("transform", "translate(0, 660)")
-				.call(country2010Axis);
-				
-				svg.append("text")
-				.attr({
-					x:20,
-					y:690,
-					class:"filter_label"
-				})
-				.text("Urban total for year 2010")
-			}*/
 			}
 			
 		}
@@ -149,9 +85,15 @@ var selectedCountry;
 			.append("path")
 			.attr({
 				d:function(d, i){
+                      
 					str = "M100 " + scale(d[keyArray[0]]);
-					for(var i = 1; i < axisArray.length; i++){
-						str += " L" + (100+(i)*120) + " " + scale(+d[keyArray[i]]); 
+					for(var i = 1; i < keyArray.length-1; i++){
+                        if(+d[keyArray[i]] >= 0){
+						  str += " L" + (100+(i)*100) + " " + scale(+d[keyArray[i]]);
+                        } else{
+                            console.log("missing data from country " + d[keyArray[11]] + 
+                            "in the year " + keyArray[i]);
+                        }
 					}
 					return str;
 				}
@@ -170,7 +112,7 @@ var selectedCountry;
 				},
 				"stroke-opacity":function(d){
 					if(d[keyArray[11]] == selectedCountry){
-						return "1";
+						return "2";
 					}else{
 						return "0.4";
 					}
@@ -183,6 +125,7 @@ var selectedCountry;
 					}
 				}
 			})
+            
 			
 		}
 		
