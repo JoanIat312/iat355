@@ -1,14 +1,17 @@
-var pathes;
-var keyArray = [];
-var axisArray = [];
+var pathes; // array for all pathes that have data points associate with
+var keyArray = [];//array that store keys of each column, used to access each cell in the corresponding column
+var dataset = [];//array that store all data points
+
+//below is all global variables
 var svg;
 var scale;
-var dataset = [];
+var axis;
 var selectedCountry;
-var url;
-//load dataset from web
 
+		//load different datasets into the dataset array
+		//the selection argument contains the id of the button user clicked passed from html
 		function loadData(selection){
+			//determine which button user clicked, and load the corresponding data
             if(selection == "national"){
                 url = "http://www.sfu.ca/~yitingl/data/national.csv";
             }else if(selection == "urban"){
@@ -17,53 +20,80 @@ var url;
                 url = "http://www.sfu.ca/~yitingl/data/rural.csv";
             }
             
+			
 			d3.csv(url)
             .row(function(d){
 			return d;
             })
+			//error checking 
             .get(function(error, points){
                 if(error){
                     console.error("Error occured while reading file. " + error);
                 }else{
+					//alert user that the file loaded successfully
                     alert(selection + " data loaded");
+					//store all data points into the array
                     dataset = points;
                     //dataset = [points[0]];
+					//initialize svg element
                     svg = d3.select("svg");
+					//call functions that draws the scale and draw all pathes that represent the data points
                     drawScale(svg, dataset);
                     drawPath(dataset);
     
                 }
-            });//end of row
-		}
+            });
+		}//end of loadData
         
 		
+		//the function that draws the scale
+		//takes two arguments, which are the svg the visualization is going to draw upon, 
+		//and the data points user selected
 		function drawScale(svg, points){
+			
+			//store all keys into the key array
+			//console will display all keys for easy understanding
 			keyArray = d3.keys(points[0]);
+			console.log("Here is the list of keys of the dataset: " + keyArray);
+			
+			//display the name of the dataset in html
 			document.getElementsByTagName("h2")[0].innerHTML = keyArray[11];
             
+			//calculate the scale
+			//a common scale of 0 to 100 is used for all three line charts since we are dealing with percentage
+			//result stored in the global variable
             scale = d3.scale.linear()
-				.domain([100, 0])
-				.range([650, 50]);
-            var axis = d3.svg.axis()
+				.domain([0, 100])
+				.range([650, 50]);//the y location the scale is mapped to on screen
+			//display the axis using the scale just calcualted at the left position x: 100, y: 0
+            axis = d3.svg.axis()
 				.orient("left")
 				.scale(scale)
 				svg.append("g")
 				.attr("class", "axis")
-				.attr("transform", "translate(" + (100) + ", 0)")
+				.attr("transform", "translate(100, 0)")
 				.call(axis);
+			
+			//createdashed lines to indicate different x (years) in the visualization
+			//except the first year because it is represented by the scale
+			//the last key is excluded because it is the name of the dataset
+			//which does not have numerical data associate with
 			for(var i = 1; i < keyArray.length-1; i++){
 				svg.append("line")
 				.attr({
+					//increase x position by 100 based on the number of years it is representing
+					//y position remain the same for all dashed lines
                     x1:100 + i * 100,
                     y1:50,
                     x2:100 + i * 100,
                     y2:650,
+					//the style of the line
                     "stroke-width": 2,
                     stroke:"#5184AF",
                     "stroke-linecap":"round",
                     "stroke-dasharray":"1, 10"
                 });
-				
+				//display the x axis which is the year using keyArray
 				svg.append("text")
 				.attr({
 					x: 90 + i *100,
@@ -71,10 +101,12 @@ var url;
 					class:"filter_label"
 				})
 				.text(keyArray[i])
-			}
+			}//end of for
 			
-		}
+		}//end of drawScale
 		
+		//the function draws a path for each data point
+		//also update the path if user made a new selection
 		function drawPath(points){
 			var str = "";
 			pathes = svg.selectAll("path")
@@ -82,27 +114,40 @@ var url;
 			.enter()
 			.append("path")
 			.attr({
+				//set the path position
 				d:function(d, i){
+					//all pathes shares the same beginning x position which is the year of 2000
+					//the y position is determined by the data scaled to the scale we are using
 					str = "M100 " + scale(d[keyArray[0]]);
+					//loop through all years (2001 - 2009) exclude data from 2000
+					//and the last one which is the name of the country
 					for(var i = 1; i < keyArray.length-1; i++){
+						//all the empty cells in the datasheet is set to be - 99
+						//only draw lines when there is data in the cell
                         if(+d[keyArray[i]] >= 0){
+							//the y position increases 100 every other year
 						  str += " L" + (100+(i)*100) + " " + scale(+d[keyArray[i]]);
                         } else{
+							//log the name of the country and the year of the cell that is missing data
                             console.log("missing data from country " + d[keyArray[11]] + 
                             "in the year " + keyArray[i]);
                         }
 					}
 					return str;
 				},
+				//set the style of the path
                 stroke:"black",
                 "stroke-opacity":0.04,
                 "stroke-width":1
 			})
+			//call the updatePath function when user hover over a line on the chart
 			.on("mouseover", function(d,i){
+				//store user's selection in the global variable
 				selectedCountry = d[keyArray[11]];
 				updatePath();
 			})
             
+			//update all pathes whenever user clicks the button and load a new set of data
             svg.selectAll("path")
             .data(points)
 			.attr({
@@ -124,8 +169,11 @@ var url;
 			})
 			
 		}
+		
+		//this function changes the style of the path when user hover over it
         function updatePath(){
             svg.selectAll("path").attr({
+				//hover over set the path to red, otherwise black
 				stroke: function(d){
 					if(d[keyArray[11]] == selectedCountry){
 						return "#FF0000";
@@ -133,13 +181,15 @@ var url;
 						return "#000";
 					}
 				},
+				//hover over set the path to full opacity, otherwise low opacity
 				"stroke-opacity":function(d){
 					if(d[keyArray[11]] == selectedCountry){
-						return "2";
+						return "1";
 					}else{
-						return "0.4";
+						return "0.04";
 					}
 				},
+				//hover over set the path to be thicker, otherwise skinner
 				"stroke-width":function(d){
 					if(d[keyArray[11]] == selectedCountry){
 						return "2";
@@ -148,4 +198,4 @@ var url;
 					}
 				}
 			})
-        }
+        }//end of updatePath
