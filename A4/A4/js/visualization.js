@@ -5,34 +5,41 @@ var svg;
 var scale;
 var dataset = [];
 var selectedCountry;
+var url;
 //load dataset from web
-	d3.csv("http://www.sfu.ca/~yitingl/data/national.csv")
-		.row(function(d){
+
+		function loadData(selection){
+            if(selection == "national"){
+                url = "http://www.sfu.ca/~yitingl/data/national.csv";
+            }else if(selection == "urban"){
+                url = "http://www.sfu.ca/~yitingl/data/urban.csv";
+            }else if(selection == "rural"){
+                url = "http://www.sfu.ca/~yitingl/data/rural.csv";
+            }
+            
+			d3.csv(url)
+            .row(function(d){
 			return d;
-		})
-		.get(function(error, points){
-			if(error){
-				console.error("Error occured while reading file. " + error);
-			}else{
-				dataset = points;
-				//dataset = [points[0]];
-				console.log(dataset);
-				svg = d3.select("svg");
-				visualization();
-				drawScale(svg, dataset);
-				drawPath(dataset);
-  
-			}
-		});//end of row
-		
-		function visualization(){
-			
+            })
+            .get(function(error, points){
+                if(error){
+                    console.error("Error occured while reading file. " + error);
+                }else{
+                    alert(selection + " data loaded");
+                    dataset = points;
+                    //dataset = [points[0]];
+                    svg = d3.select("svg");
+                    drawScale(svg, dataset);
+                    drawPath(dataset);
+    
+                }
+            });//end of row
 		}
+        
 		
 		function drawScale(svg, points){
 			keyArray = d3.keys(points[0]);
 			document.getElementsByTagName("h2")[0].innerHTML = keyArray[11];
-			console.log(keyArray);
             
             scale = d3.scale.linear()
 				.domain([100, 0])
@@ -44,16 +51,7 @@ var selectedCountry;
 				.attr("class", "axis")
 				.attr("transform", "translate(" + (100) + ", 0)")
 				.call(axis);
-                var max, min;
 			for(var i = 1; i < keyArray.length-1; i++){
-				 max = d3.max(points, function(d){
-						return +d[keyArray[i]];
-					});
-                   min = d3.min(points, function(d){
-						return +d[keyArray[i]];
-					});
-                    console.log(min, max);
-				
 				svg.append("line")
 				.attr({
                     x1:100 + i * 100,
@@ -85,7 +83,6 @@ var selectedCountry;
 			.append("path")
 			.attr({
 				d:function(d, i){
-                      
 					str = "M100 " + scale(d[keyArray[0]]);
 					for(var i = 1; i < keyArray.length-1; i++){
                         if(+d[keyArray[i]] >= 0){
@@ -96,13 +93,39 @@ var selectedCountry;
                         }
 					}
 					return str;
-				}
+				},
+                stroke:"black",
+                "stroke-opacity":0.04,
+                "stroke-width":1
 			})
 			.on("mouseover", function(d,i){
 				selectedCountry = d[keyArray[11]];
-				drawPath(points);
+				updatePath();
 			})
-			svg.selectAll("path").attr({
+            
+            svg.selectAll("path")
+            .data(points)
+			.attr({
+				d:function(d, i){
+					str = "M100 " + scale(d[keyArray[0]]);
+					for(var i = 1; i < keyArray.length-1; i++){
+                        if(+d[keyArray[i]] >= 0){
+						  str += " L" + (100+(i)*100) + " " + scale(+d[keyArray[i]]);
+                        } else{
+                            console.log("missing data from country " + d[keyArray[11]] + 
+                            "in the year " + keyArray[i]);
+                        }
+					}
+					return str;
+				},
+                stroke:"black",
+                "stroke-opacity":0.04,
+                "stroke-width":1
+			})
+			
+		}
+        function updatePath(){
+            svg.selectAll("path").attr({
 				stroke: function(d){
 					if(d[keyArray[11]] == selectedCountry){
 						return "#FF0000";
@@ -125,11 +148,4 @@ var selectedCountry;
 					}
 				}
 			})
-            
-			
-		}
-		
-		function showValue(d){
-		  d3.select("#output").text(JSON.stringify(d));
-		  console.log(d);
-		}
+        }

@@ -1,6 +1,7 @@
 html, body
 {
     height: 100%;
+     text-align: center;
 }
 
 div.svg-container {
@@ -45,3 +46,19 @@ path {
 .brush{
 	opacity: 0.9;
 }
+
+.button{
+    text-align: center;
+    margin: 0 12%;
+    margin-bottom:1%;
+    box-sizing:border-box;
+    padding: 1%;
+    background-color: lightgray;
+    font-size: 14pt;
+    display:block;
+    width:8%;
+    float:left;
+}
+
+
+
