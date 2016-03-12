@@ -1,22 +1,35 @@
 var pathes; // array for all pathes that have data points associate with
-var keyArray = [];//array that store keys of each column, used to access each cell in the corresponding column
+var keyArray = [];
+var keyArray2 = [];//array that store keys of each column, used to access each cell in the corresponding column
 var dataset = [];//array that store all data points
-
+var dataset2 = [];
+var yearArray = [];
 //below is all global variables
 var svg;
 var scale;
+var xScale;
+var countryScale;
+var countryAxis;
 var axis;
+var xAxis;
 var selectedCountry;
 
 		//load different datasets into the dataset array
 		//the selection argument contains the id of the button user clicked passed from html
-		function loadData(selection){
+		function loadData(){
 			//determine which button user clicked, and load the corresponding data
-            if(selection == "national"){
+            var list = document.forms[0];
+            var selection
+            for(var i = 0; i < list.length; i++){
+                if(list[i].checked){
+                    selection = list[i].value;
+                }
+            }
+            if(selection == "National"){
                 url = "http://www.sfu.ca/~yitingl/data/national.csv";
-            }else if(selection == "urban"){
+            }else if(selection == "Urban"){
                 url = "http://www.sfu.ca/~yitingl/data/urban.csv";
-            }else if(selection == "rural"){
+            }else if(selection == "Rural"){
                 url = "http://www.sfu.ca/~yitingl/data/rural.csv";
             }
             
@@ -36,6 +49,7 @@ var selectedCountry;
                     dataset = points;
                     //dataset = [points[0]];
 					//initialize svg element
+       
                     svg = d3.select("svg");
 					//call functions that draws the scale and draw all pathes that represent the data points
                     drawScale(svg, dataset);
@@ -54,7 +68,10 @@ var selectedCountry;
 			//store all keys into the key array
 			//console will display all keys for easy understanding
 			keyArray = d3.keys(points[0]);
-			console.log("Here is the list of keys of the dataset: " + keyArray);
+            for(var i = 0; i < keyArray.length-1; i++){
+                yearArray[i] = keyArray[i];
+            }
+			//console.log("Here is the list of keys of the dataset: " + yearArray);
 			
 			//display the name of the dataset in html
 			document.getElementsByTagName("h2")[0].innerHTML = keyArray[11];
@@ -65,6 +82,9 @@ var selectedCountry;
             scale = d3.scale.linear()
 				.domain([0, 100])
 				.range([650, 50]);//the y location the scale is mapped to on screen
+            xScale = d3.scale.ordinal()
+            .domain(yearArray)
+            .rangePoints([100, 1100]);
 			//display the axis using the scale just calcualted at the left position x: 100, y: 0
             axis = d3.svg.axis()
 				.orient("left")
@@ -78,7 +98,14 @@ var selectedCountry;
 			//except the first year because it is represented by the scale
 			//the last key is excluded because it is the name of the dataset
 			//which does not have numerical data associate with
-			for(var i = 1; i < keyArray.length-1; i++){
+			xAxis = d3.svg.axis()
+            .scale(xScale)
+            .orient("bottom")
+            svg.append("g")
+            .attr("class", "xAxis")
+		    .attr("transform", "translate(0, 670)")
+			.call(xAxis);
+            for(var i = 1; i < keyArray.length-1; i++){
 				svg.append("line")
 				.attr({
 					//increase x position by 100 based on the number of years it is representing
@@ -94,15 +121,24 @@ var selectedCountry;
                     "stroke-dasharray":"1, 10"
                 });
 				//display the x axis which is the year using keyArray
-				svg.append("text")
+				/*svg.append("text")
 				.attr({
 					x: 90 + i *100,
 					y: 670,
 					class:"filter_label"
 				})
-				.text(keyArray[i])
+                 .on("click", function(){
+                    //drawAnotherHist(selectedCountry);
+                    alert(i);
+                })
+				.text(keyArray[i])*/
+               
 			}//end of for
-			
+			d3.selectAll(".xAxis .tick")
+            .on("click", function(d){
+                alert("clicked" + d);
+                drawAnotherHist(points, d);
+            })
 		}//end of drawScale
 		
 		//the function draws a path for each data point
@@ -129,8 +165,8 @@ var selectedCountry;
 						  str += " L" + (100+(i)*100) + " " + scale(+d[keyArray[i]]);
                         } else{
 							//log the name of the country and the year of the cell that is missing data
-                            console.log("missing data from country " + d[keyArray[11]] + 
-                            "in the year " + keyArray[i]);
+                            //console.log("missing data from country " + d[keyArray[11]] + 
+                            //"in the year " + keyArray[i]);
                         }
 					}
 					return str;
@@ -146,6 +182,13 @@ var selectedCountry;
 				selectedCountry = d[keyArray[11]];
 				updatePath();
 			})
+            .on("click", function(d,i){
+                
+                selectedCountry = d[keyArray[11]]
+                //console.log("selected: "+  selectedCountry);
+                //loadSelection();
+                
+            });
             
 			//update all pathes whenever user clicks the button and load a new set of data
             svg.selectAll("path")
@@ -157,8 +200,8 @@ var selectedCountry;
                         if(+d[keyArray[i]] >= 0){
 						  str += " L" + (100+(i)*100) + " " + scale(+d[keyArray[i]]);
                         } else{
-                            console.log("missing data from country " + d[keyArray[11]] + 
-                            "in the year " + keyArray[i]);
+                           // console.log("missing data from country " + d[keyArray[11]] + 
+                            //"in the year " + keyArray[i]);
                         }
 					}
 					return str;
@@ -199,3 +242,130 @@ var selectedCountry;
 				}
 			})
         }//end of updatePath
+        
+         function drawAnotherHist(points, year){
+            var svg2 = svg = d3.select("body").append("svg");
+            var countryArray = [];
+            for(var i = 1; i < points.length; i++){
+             countryArray[i] = points[i][keyArray[11]];
+            }
+            
+            console.log(dataset);
+             axis = d3.svg.axis()
+                .orient("left")
+                .scale(scale)
+                svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(100, 0)")
+                .call(axis);
+            countryScale = d3.scale.ordinal()
+            .domain(countryArray)
+            .rangePoints([100, 1100]);
+            countryAxis = d3.svg.axis()
+                .orient("bottom")
+                .scale(countryScale)
+                 svg.append("g")
+                .attr("class", "xAxis")
+                .attr("transform", "translate(0, 670)")
+                .call(countryAxis);
+                
+            svg2.selectAll("bar")
+            .data(points)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", function(d){
+                return countryScale(d[keyArray[11]]);
+            })
+            .attr("y", function(d){
+                return scale(d[year]);
+            })
+            .attr("width", "2")
+            .attr("height", function(d){
+                if(650 - scale(d[year]) > 0){
+                    return  650 - scale(d[year]);
+                }else{
+                    console.log("missing data from country " + d[keyArray[11]] + 
+                            "in the year " + year);
+                }
+            })
+        }
+        
+        
+        /*function loadSelection(){
+            var row = [];
+            d3.csv("http://www.sfu.ca/~yitingl/data/urban.csv")
+            .row(function(d){
+			    return d;
+            })
+			//error checking 
+            .get(function(error, points){
+                if(error){
+                    console.error("Error occured while reading file. " + error);
+                }else{
+					//alert user that the file loaded successfully
+					//store all data points into the array
+                    dataset2 = points;
+                    keyArray2 = d3.keys(points[0]);
+                    //console.log(dataset2);
+                    dataset2.forEach (function(d){
+                        //console.log(d[keyArray[11]]);
+                        if(d[keyArray2[11]] == selectedCountry){
+                            row = d;
+                            console.log(row);
+                        }else{
+                            console.log("didnt found")
+                        }
+                    });
+                    //dataset = [points[0]];
+					//initialize svg element
+                     drawHistogram(row);
+                     
+                }
+            });
+           
+        }
+        function drawHistogram(row){
+            var svg2 = svg = d3.select("body").append("svg");
+            //call functions that draws the scale and draw all pathes that represent the data points
+            axis = d3.svg.axis()
+                .orient("left")
+                .scale(scale)
+                svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(100, 0)")
+                .call(axis);
+                console.log(keyArray2);
+            for(var i = 1; i < keyArray2.length-1; i++){
+                svg.append("text")
+                .attr({
+                    x: 90 + i *100,
+                    y: 680,
+                    class:"filter_label"
+                })
+                .text(keyArray2[i])
+                //console.log(keyArray2);
+            }
+            var bars = svg2.selectAll(".bar")
+            .data(row)
+            .enter()
+            .append("g")
+            .attr("class", "bar");
+            
+            bars.append("rect")
+            .attr("x", function(d){
+                return 200;
+            })
+            .attr("y", 200)
+            .attr("width",100)
+            .attr("height", function(d){ 
+                return 100;
+            });
+            /*for(var i = 0; i < keyArray.length; i++){
+                if(dataset2[i][keyArray[11]] == selectedCountry){
+                    console.log(dataset2[i]);
+                }
+            }*/
+        
+        
+       

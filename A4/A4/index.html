@@ -8,12 +8,17 @@
   </head>
   <body>
       <h1>Visualization</h1>
-     <div class = "button", id = "national" onclick = "loadData(this.id)">National</div>
-     <div class = "button", id = "urban" onclick = "loadData(this.id)">Urban</div>
-     <div class = "button", id = "rural" onclick = "loadData(this.id)">Rural</div>
+      <form>
+          <input type = "radio" name="selection" value = "National" checked>National</input>
+          <input type = "radio" name="selection" value = "Urban">Urban</input>
+          <input type = "radio" name="selection" value = "Rural">Rural</input>
+          <input type = "button" onclick = "loadData()", value = "Load">  
+       </form>
     <div class="svg-container">
       <h2></h2>
-      <svg></svg>
+      <svg>
+         
+      </svg>
     </div>
 	<div id="output"></div>
     <script src = "js/visualization.js"></script>

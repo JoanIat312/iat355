@@ -1,6 +1,5 @@
 html, body
 {
-    height: 100%;
      text-align: center;
 }
 
@@ -16,6 +15,9 @@ svg {
 	font-size: 10px;
 }
 
+.bar {
+  fill: orange;
+}
 
 path {
 	fill: none;
@@ -27,6 +29,25 @@ path {
 	fill: none;
 	stroke: #000;
 	
+}
+
+.xAxis{
+    fill: none;
+	stroke: #000;
+    
+}
+.xAxis .tick text{
+    -webkit-transform:rotate(90deg);
+	-moz-transform:rotate(90deg);
+	-o-transform: rotate(90deg);
+   text-align: left;
+
+}
+.xAxis .tick line{
+    -webkit-transform:rotate(180deg);
+	-moz-transform:rotate(180deg);
+	-o-transform: rotate(180deg);
+
 }
 
 .legend{
