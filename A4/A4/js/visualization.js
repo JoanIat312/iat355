@@ -8,6 +8,9 @@ var bars = [];
 //below is all global variables
 var svg;
 var svg2;
+var brush;
+var slider;
+var handler;
 var scale;
 var xScale;
 var countryScale;
@@ -79,7 +82,7 @@ var selectedCountry;
 			//except the first year because it is represented by the scale
 			//the last key is excluded because it is the name of the dataset
 			//which does not have numerical data associate with
-			xAxis = d3.svg.axis()
+			/*xAxis = d3.svg.axis()
             .scale(xScale)
             .orient("bottom")
             svg.append("g")
@@ -114,8 +117,43 @@ var selectedCountry;
                 })
 				.text(keyArray[i])*/
                
-			}//end of for
-			d3.selectAll(".xAxis .tick")
+			//}//end of for
+            
+            brush = d3.svg.brush()
+            .x(xScale)
+            .extent([0, 0])
+            .on("brush", brushed)
+            .on("brushend", brushend);
+           
+            
+            svg.append("g")
+            .attr("class", "xAxis")
+            .attr("transform", "translate(0, 670)")
+			.call(d3.svg.axis()
+                .scale(xScale)
+                .orient("bottom"))
+             .select(".domain")
+             .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+              .attr("class", "halo");
+              
+            slider = svg.append("g")
+            .attr("class", "slider")
+            .call(brush);
+            slider.selectAll(".extent,.resize")
+                .remove();
+            slider.select(".background")
+                .attr("height", 40);
+            
+            handle = slider.append("circle")
+                .attr("class", "handle")
+                .attr("transform", "translate(0,670)")
+                .attr("r", 9);
+            slider.call(brush.event)
+                .transition() // gratuitous intro!
+                    .duration(750)
+                    .call(brush.extent([70, 70]))
+                    .call(brush.event);
+			/*d3.selectAll(".xAxis .tick")
             .on("click", function(d){
                 var dataset2 = [];
                for(var i = 0; i < points.length; i++){
@@ -127,9 +165,95 @@ var selectedCountry;
             }
                 drawAnotherHist(dataset2, d);
                 
-            })
+            })*/
 		}//end of drawScale
 		
+       function brushed() {
+            var value = brush.extent()[1];
+            if (d3.event.sourceEvent) { // not a programmatic event
+                
+                if(d3.mouse(this)[0] > 70 && d3.mouse(this)[0] < 1300){
+                    value = d3.mouse(this)[0];
+                }else if (d3.mouse(this)[0] <= 70){
+                    value = 70;
+                }else{
+                    value = 1300;
+                }
+                brush.extent([value, value]);
+            }
+                
+                handle.attr("cx", value);
+            }
+        function brushend() {
+            var year;
+            if (!d3.event.sourceEvent) {
+                return; // only transition after input
+            }
+            var value = brush.extent()[1];                    
+             if (d3.event.sourceEvent) { // not a programmatic event
+                if(d3.mouse(this)[0] > 70 && d3.mouse(this)[0] < 1300){
+                    value = d3.mouse(this)[0];
+                    if(value >= 70 && value <= 130){
+                        value = 70;
+                        year = "2000";
+                    }else if (value >= 130 && value < 252 ){
+                        value = 190;
+                        year = "2001";
+                    }else if (value >= 252 && value < 377){
+                        value = 315;
+                        year = "2002";
+                    }else if (value >= 377 && value < 500){
+                        value = 440;
+                        year = "2003";
+                    }else if (value >= 500 && value < 623){
+                        value = 560;
+                        year = "2004";
+                    }else if(value >= 623 && value < 748){
+                        value = 686;
+                        year = "2005";
+                    }else if(value >= 748 && value < 873){
+                        value = 810;
+                        year = "2006";
+                    }else if (value >= 873 && value < 996){
+                        value = 936;
+                        year = "2007";
+                    }else if (value >= 996 && value < 1119){
+                        value = 1057;
+                        year = "2008";
+                    }else if (value >= 1119 && value < 1241){
+                        value = 1182;
+                        year = "2009";
+                    }else{
+                        value = 1300;
+                        year = "2010";
+                    }
+                }else if (d3.mouse(this)[0] <= 70){
+                    value = 70;
+                    year = "2000";
+                }else{
+                    value = 1300;
+                     year = "2010";
+                }
+                 brush.extent([value, value]);
+                 loadSelection(year);
+            } 
+             
+             console.log(value);
+            
+        }
+        
+        function loadSelection(year){
+            var dataset2 = [];
+            for(var i = 0; i < dataset.length; i++){
+                var datapoint = new Object();
+                datapoint[keyArray[11]] = dataset[i][keyArray[11]];
+                datapoint[year] = dataset[i][year];
+                dataset2.push(datapoint);
+                
+            }
+            console.log(dataset2);
+            drawAnotherHist(dataset2, year);
+        }
 		//the function draws a path for each data point
 		//also update the path if user made a new selection
 		function drawPath(points){
