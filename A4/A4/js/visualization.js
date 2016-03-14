@@ -61,7 +61,7 @@ var selectedCountry;
 			//a common scale of 0 to 100 is used for all three line charts since we are dealing with percentage
 			//result stored in the global variable
             scale = d3.scale.linear()
-				.domain([20, 100])
+				.domain([0, 100])
 				.range([650, 50]);//the y location the scale is mapped to on screen
             xScale = d3.scale.ordinal()
             .domain(yearArray)
@@ -85,6 +85,7 @@ var selectedCountry;
             svg.append("g")
             .attr("class", "xAxis")
 		    .attr("transform", "translate(0, 670)")
+
 			.call(xAxis);
             for(var i = 0; i < keyArray.length-1; i++){
 				svg.append("line")
@@ -97,9 +98,9 @@ var selectedCountry;
                     y2:650,
 					//the style of the line
                     "stroke-width": 1.5,
-                    stroke:"#5184AF",
                     "stroke-linecap":"round",
-                    "stroke-dasharray":"1, 10"
+                    "stroke-dasharray":"1, 10",
+
                 });
 				//display the x axis which is the year using keyArray
 				/*svg.append("text")
@@ -194,7 +195,7 @@ var selectedCountry;
 					if(d[keyArray[11]] == selectedCountry){
 						return "#FF0000";
 					}else{
-						return "#000";
+						return "#BAB09E";
 					}
 				},
 				//hover over set the path to full opacity, otherwise low opacity
@@ -232,6 +233,8 @@ var selectedCountry;
                 .attr("class", "axis")
                 .attr("transform", "translate(60, 0)")
                 .call(axis);
+
+
             countryScale = d3.scale.ordinal()
             .domain(countryArray)
             .rangePoints([65, screen.width-60]);
@@ -311,7 +314,7 @@ var selectedCountry;
 					if(d[keyArray[11]] == selectedCountry){
 						return "#FF0000";
 					}else{
-						return "#000";
+						return "#BAB09E";
 					}
 				},
                 width:function(d){
