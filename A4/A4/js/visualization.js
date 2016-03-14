@@ -208,7 +208,7 @@ var selectedCountry;//global variable to link the two national visualization
         //load data for the national histogram
         function loadSelection(year){
                var dataset2 = [];
-               for(var i = 0; i < points.length; i++){
+               for(var i = 0; i < dataset.length; i++){
                 var datapoint = new Object();
                 datapoint[keyArray[11]] = dataset[i][keyArray[11]];
                 datapoint[year] = dataset[i][year];
