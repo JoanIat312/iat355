@@ -5,9 +5,11 @@ var dataset = [];//array that store all data points
 var yearArray = [];
 var countryArray = [];
 var bars = [];
+var countryBars = [];
 //below is all global variables
 var svg;
 var svg2;
+var svg3;
 var brush;
 var slider;
 var handler;
@@ -251,7 +253,7 @@ var selectedCountry;
                 dataset2.push(datapoint);
                 
             }
-            console.log(dataset2);
+            //console.log(dataset2);
             drawAnotherHist(dataset2, year);
         }
 		//the function draws a path for each data point
@@ -298,13 +300,20 @@ var selectedCountry;
                 "stroke-opacity":0.4
 			})
 			//call the updatePath function when user hover over a line on the chart
-            .on('click', tip.show)
              .on("mouseover", function(d, i){
+                 tip.show(d)
                  selectedCountry = d[keyArray[11]];
                  updatePath();
                  updateBar();
+                 
              })
-             .on('mouseout', tip.hide)
+             .on("click" ,function(d){
+                  selectedCountry = d[keyArray[11]];
+                  loadUrbanSelection();
+             })
+             .on('mouseout', function(d){
+                 tip.hide(d);
+             })
 		}
 		
 		//this function changes the style of the path when user hover over it
@@ -346,7 +355,7 @@ var selectedCountry;
                 countryArray[i] = points[i][keyArray[11]];
             }
             document.getElementsByTagName("h3")[0].innerHTML = keyArray[11] + " of the year " + year;
-            console.log(year);
+            //console.log(year);
             //console.log(points);
             svg2 = d3.select(".svg2-container svg");
              axis = d3.svg.axis()
@@ -399,13 +408,20 @@ var selectedCountry;
                             "in the year " + year);
                 }
             })
-             .on('click', tip.show)
+             
              .on("mouseover", function(d, i){
                  selectedCountry = d[keyArray[11]];
                  updateBar();
                  updatePath();
+                 tip.show(d);
              })
-             .on('mouseout', tip.hide)
+              .on("click" ,function(d){
+                  selectedCountry = d[keyArray[11]];
+                  loadUrbanSelection();
+             })
+             .on('mouseout', function(d){
+                 tip.hide(d);
+             })
              
               bars = svg2.selectAll("rect")
               .data(points)
@@ -447,8 +463,9 @@ var selectedCountry;
                 }
              })
         }
-        /*function loadSelection(){
+        function loadUrbanSelection(){
             var row = [];
+            var datasetUrban = [];
             d3.csv("http://www.sfu.ca/~yitingl/data/urban.csv")
             .row(function(d){
 			    return d;
@@ -460,67 +477,132 @@ var selectedCountry;
                 }else{
 					//alert user that the file loaded successfully
 					//store all data points into the array
-                    dataset2 = points;
+                    datasetUrban = points;
                     keyArray2 = d3.keys(points[0]);
                     //console.log(dataset2);
-                    dataset2.forEach (function(d){
+                    datasetUrban.forEach (function(d){
                         //console.log(d[keyArray[11]]);
                         if(d[keyArray2[11]] == selectedCountry){
-                            row = d;
-                            console.log(row);
+                           for(var i = 0; i < keyArray.length - 1; i ++){
+                               var datapoint = new Object();
+                               datapoint.year = keyArray2[i];
+                               datapoint.value = d[keyArray2[i]];
+                               //datapoint[keyArray2[11]] = d[keyArray2[11]];
+                               row.push(datapoint);
+                           }
                         }else{
                             console.log("didnt found")
                         }
                     });
                     //dataset = [points[0]];
 					//initialize svg element
-                     drawHistogram(row);
-                     
+                     drawUrbanHistogram(row);
+                     console.log(row);
                 }
             });
            
         }
-        function drawHistogram(row){
-            var svg2 = svg = d3.select("body").append("svg");
-            //call functions that draws the scale and draw all pathes that represent the data points
+        function drawUrbanHistogram(row){
+           
+            document.getElementsByTagName("h4")[0].innerHTML = keyArray2[11] + " of the country " + selectedCountry;
+            svg3 = d3.select(".svg3-container svg");
             axis = d3.svg.axis()
-                .orient("left")
-                .scale(scale)
-                svg.append("g")
-                .attr("class", "axis")
-                .attr("transform", "translate(100, 0)")
-                .call(axis);
-                console.log(keyArray2);
-            for(var i = 1; i < keyArray2.length-1; i++){
-                svg.append("text")
-                .attr({
-                    x: 90 + i *100,
-                    y: 680,
-                    class:"filter_label"
-                })
-                .text(keyArray2[i])
-                //console.log(keyArray2);
-            }
-            var bars = svg2.selectAll(".bar")
+				.orient("left")
+				.scale(scale)
+				svg3.append("g")
+				.attr("class", "axis")
+				.attr("transform", "translate(60, 0)")
+				.call(axis);
+            xAxis = d3.svg.axis()
+            .scale(xScale)
+            .orient("bottom")
+            svg3.append("g")
+            .attr("class", "xAxis")
+		    .attr("transform", "translate(10, 660)")
+			.call(xAxis);
+            
+            var tip = d3.tip()
+            .attr("class", "d3-tip")
+            .offset([-5,0])
+            .html(function(d) {
+                    
+                    return "<strong>Value:</strong> <span style='color:red'>" + d.value + "</span>";
+                    
+                })   
+            svg3.call(tip); 
+             
+            countryBars = svg3.selectAll("rect")
             .data(row)
             .enter()
             .append("g")
             .attr("class", "bar");
             
-            bars.append("rect")
+            countryBars.append("rect")
             .attr("x", function(d){
-                return 200;
+                return xScale(d.year);
             })
-            .attr("y", 200)
-            .attr("width",100)
-            .attr("height", function(d){ 
-                return 100;
-            });
-            /*for(var i = 0; i < keyArray.length; i++){
-                if(dataset2[i][keyArray[11]] == selectedCountry){
-                    console.log(dataset2[i]);
+            .attr("y", function(d){
+                return scale(d.value);
+            })
+            .attr("width", "20")
+            .attr("height", function(d){
+                if(650 - scale(d.value) > 0){
+                    return  650 - scale(d.value);
+                }else{
+                    console.log("missing data from country " + selectedCountry + 
+                            "in the year " + d.year);
                 }
-            }*/
+            }).on("mouseover", function(d, i){
+                 tip.show(d)
+                 updateUrbanBar(d.year);
+                 
+             })
+             .on('mouseout', function(d){
+                 tip.hide(d);
+                 svg3.selectAll("rect")
+                .transition().duration(200)
+                .attr({
+                    fill: "#000",
+                    width: "20"
+             })
+             })
+            countryBars.svg3.selectAll("rect")
+            .data(row)
+            .transition().duration(1000)
+            .attr("x", function(d){
+                return xScale(d.year);
+            })
+            .attr("y", function(d){
+                return scale(d.value);
+            })
+            .attr("width", "20")
+            .attr("height", function(d){
+                if(650 - scale(d.value) > 0){
+                    return  650 - scale(d.value);
+                }else{
+                    console.log("missing data from country " + selectedCountry + 
+                            "in the year " + d.year);
+                }
+            })
+        }
         
-        
-       
+        function updateUrbanBar(year){
+            svg3.selectAll("rect")
+                .transition().duration(200)
+                .attr({
+                    fill: function(d){
+					if(d.year == year){
+						return "#FF0000";
+					}else{
+						return "#000";
+					}
+				},
+                width:function(d){
+                    if(d.year == year){
+						return "30";
+					}else{
+						return "20";
+					}
+                }
+             })
+        }
