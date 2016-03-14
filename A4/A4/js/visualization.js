@@ -538,8 +538,8 @@ var selectedCountry;//global variable to link the two national visualization
             })
             .attr("width", "20")
             .attr("height", function(d){
-                if(650 - scale(d.value) > 0){
-                    return  650 - scale(d.value);
+                if(660 - scale(d.value) > 0){
+                    return  660 - scale(d.value);
                 }else{
                     console.log("missing data from country " + selectedCountry + 
                             "in the year " + d.year);
@@ -560,9 +560,9 @@ var selectedCountry;//global variable to link the two national visualization
                     width: "20"
              })
              })
-             
+             console.log(row);
              //update all bars when user select another country
-            countryBars.svg3.selectAll("rect")
+            countryBars=svg3.selectAll("rect")
             .data(row)
             .transition().duration(1000)
             .attr("x", function(d){
@@ -573,8 +573,8 @@ var selectedCountry;//global variable to link the two national visualization
             })
             .attr("width", "20")
             .attr("height", function(d){
-                if(650 - scale(d.value) > 0){
-                    return  650 - scale(d.value);
+                if(660 - scale(d.value) > 0){
+                    return  660 - scale(d.value);
                 }else{
                     console.log("missing data from country " + selectedCountry + 
                             "in the year " + d.year);
