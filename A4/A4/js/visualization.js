@@ -207,9 +207,8 @@ var selectedCountry;//global variable to link the two national visualization
         
         //load data for the national histogram
         function loadSelection(year){
-            var dataset2 = [];
-            for(var i = 0; i < dataset.length; i++){
-                //create a new dataset that only has the value of the selected year of all countries
+               var dataset2 = [];
+               for(var i = 0; i < points.length; i++){
                 var datapoint = new Object();
                 datapoint[keyArray[11]] = dataset[i][keyArray[11]];
                 datapoint[year] = dataset[i][year];
@@ -295,7 +294,7 @@ var selectedCountry;//global variable to link the two national visualization
 					if(d[keyArray[11]] == selectedCountry){
 						return "#FF0000";
 					}else{
-						return "#000";
+						return "#BAB09E";
 					}
 				},
 				//hover over set the path to full opacity, otherwise low opacity
@@ -334,8 +333,7 @@ var selectedCountry;//global variable to link the two national visualization
                 svg2.append("g")
                 .attr("class", "axis")
                 .attr("transform", "translate(60, 0)")
-                .call(axis);
-                
+                .call(axis);               
             //initializing the scale for all countries
             countryScale = d3.scale.ordinal()
             .domain(countryArray)
@@ -432,7 +430,7 @@ var selectedCountry;//global variable to link the two national visualization
 					if(d[keyArray[11]] == selectedCountry){
 						return "#FF0000";
 					}else{
-						return "#000";
+						return "#BAB09E";
 					}
 				},
                 width:function(d){
