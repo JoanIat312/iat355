@@ -1,12 +1,35 @@
 var pathes; // array for all pathes that have data points associate with
 var keyArray = [];//array that store keys of each column, used to access each cell in the corresponding column
 var keyArray2 = [];//array that store keys of each column, used to access each cell in the corresponding column
-var dataset = [];//array that store all data points
-var yearArray = [];//array that stroe all years used in the year line chart and urban histogram
-var countryArray = [];//array that stroe all country names used in the national histogram
-var bars = [];//array that stores all rectagle objects for the national histogram
+var keyArray3 = [];
+var datasetTotal = [];//array that store all data points
+var datasetUrban = [];
+var datasetRural = [];
 var countryBars = [];//array that stores all rectagle objects for the urban histogram
-
+var moreCountryBars=[];
+var legendList = [
+    {
+        "Type":"national",
+        "color":"black" 
+        
+    },
+    {
+        "Type":"urban",
+        "color":"blue" 
+    },
+    {
+        "Type":"rural",
+        "color":"orange" 
+    }];
+    
+  var legendList2 = [{
+        "Type":"urban",
+        "color":"blue" 
+    },
+    {
+        "Type":"rural",
+        "color":"orange" 
+    }];
 //below is svg elements
 var svg;//svg for the first visualziation which is the national line chart
 var svg2;//svg for the second visualziation which is the national histogram
@@ -14,19 +37,24 @@ var svg3;//svg for the third visualziation which is the urban histogram of selec
 
 //below is elements for brushing in the national line chart
 var brush;
-var slider;
-var handler;
 
 //belows global variables for scales and axies
+var brushableScale;
 var scale;
 var xScale;
+var xScale2;
+var duoxScale;
 var countryScale;
 var countryAxis;
 var axis;
+var brushableAxis
 var xAxis;
+var xAxis2;
+var scaleMin = 0;
+var scaleMax = 100;
+var regionSelected;
 
 var selectedCountry;//global variable to link the two national visualization
-
 
         //load the national data from server
         d3.csv("http://www.sfu.ca/~yitingl/data/national.csv")
@@ -39,186 +67,296 @@ var selectedCountry;//global variable to link the two national visualization
                     console.error("Error occured while reading file. " + error);
                 }else{
 					//store all data points into the array
-                    dataset = points;
-                    //dataset = [points[0]];
+                    datasetTotal = points;
+                    keyArray = d3.keys(datasetTotal[0]);
+                    //dataset = points[1];
 					//initialize svg element
                     svg = d3.select(".svg1-container svg");
+                   
 					//call functions that draws the scale and draw all pathes that represent the data points
-                    drawScale(svg, points);
-                    drawPath(points);
-    
+                    drawScale();
+                    drawPath(datasetTotal);
                 }
             });
+            
+            d3.csv("http://www.sfu.ca/~yitingl/data/urban.csv")
+            .row(function(d){
+			return d;
+            })
+			//error checking 
+            .get(function(error, points){
+                if(error){
+                    console.error("Error occured while reading file. " + error);
+                }else{
+					//store all data points into the array
+                    datasetUrban = points;
+                    
+                }
+            });
+            
+            d3.csv("http://www.sfu.ca/~yitingl/data/rural.csv")
+            .row(function(d){
+			return d;
+            })
+			//error checking 
+            .get(function(error, points){
+                if(error){
+                    console.error("Error occured while reading file. " + error);
+                }else{
+					//store all data points into the array
+                    datasetRural = points;
+                   
+                }
+            });
+        function loadSelection(){
+            var row = [];
+            var row2 = [];
+            var row3 = [];
+            var row4 = [];
+            
+            datasetTotal.forEach (function(d){
+            if(d[keyArray[11]] == selectedCountry){
+                row3.push(d);
+                 for(var i = 0; i < keyArray.length - 3; i ++){
+                        
+                        //fill up the row with the values of the country
+                        var datapoint = new Object();
+                        datapoint.year = keyArray[i];
+                        datapoint.value = d[keyArray[i]];
+                        row4.push(datapoint);
+                    }
+                }else{
+                    //console.log("didnt found")
+                }
+            });
+            keyArray3 = d3.keys(datasetRural[0]);
+            // loop through the second dataset to find the row of the selected country
+            datasetRural.forEach (function(d){
+                if(d[keyArray3[11]] == selectedCountry){
+                    row3.push(d);
+                    for(var i = 0; i < keyArray.length - 3; i ++){
+                        
+                        //fill up the row with the values of the country
+                        var datapoint = new Object();
+                        datapoint.year = keyArray3[i];
+                        datapoint.value = d[keyArray3[i]];
+                        row.push(datapoint);
+                    }
+                }else{
+                    //console.log("didnt found")
+                }
+            });
+            
+            //call function to draw the urban histogram of the selected country
+            
+                //console.log(row)
+            
+            keyArray2 = d3.keys(datasetUrban[0]);
+            // loop through the second dataset to find the row of the selected country
+            datasetUrban.forEach (function(d){
+                if(d[keyArray2[11]] == selectedCountry){
+                    row3.push(d);
+                    
+                    for(var i = 0; i < keyArray.length - 3; i ++){
+                        //fill up the row with the values of the country
+                        var datapoint = new Object();
+                        datapoint.year = keyArray2[i];
+                        datapoint.value = d[keyArray2[i]];
+                        row2.push(datapoint);
+                    }
+                }else{
+                    //console.log("didnt found")
+                }
+            });
+            
+            //call function to draw the urban histogram of the selected country
+                //console.log(row);
+            drawUrbanHistogram(row2);
+            drawRuralHistogram(row);
+            drawCountryPath(row3);
+            drawUrbanDots(row2);
+            drawRuralDots(row);
+            drawNationalDots(row4);
+        }
         
-		
 		//the function that draws the scale
 		//takes two arguments, which are the svg the visualization is going to draw upon, 
 		//and the data points user selected
-		function drawScale(svg, points){
-			
+		function drawScale(){
+			svg = d3.select(".svg1-container svg");
 			//store all keys into the key array
-			//console will display all keys for easy understanding
-			keyArray = d3.keys(points[0]);
-            for(var i = 0; i < keyArray.length-1; i++){
-                yearArray[i] = keyArray[i];
-            }
+			//console will display all keys for easy understandin
 			
 			//display the name of the dataset in html
-			document.getElementsByTagName("h2")[0].innerHTML = keyArray[11];
-            
+			document.getElementsByTagName("h2")[0].innerHTML = "Proportion of the population using improved drinking water sources, national";
+            document.getElementsByTagName("h3")[0].innerHTML = "Proportion of the population using improved drinking water sources";
+            document.getElementsByTagName("h4")[0].innerHTML = "Proportion of the population using improved drinking water sources, urban and rural ";
 			//calculate the scale
 			//a common scale of 0 to 100 is used for all three line charts since we are dealing with percentage
 			//result stored in the global variable
-            scale = d3.scale.linear()
-				.domain([0, 100])
-				.range([650, 50]);//the y location the scale is mapped to on screen
-            xScale = d3.scale.ordinal()
-            .domain(yearArray)
-            .rangePoints([65, screen.width-60]);
-			//display the axis using the scale just calcualted at the left position x: 100, y: 0
-            axis = d3.svg.axis()
-				.orient("left")
-				.scale(scale)
-				svg.append("g")
-				.attr("class", "axis")
-				.attr("transform", "translate(65, 0)")
-				.call(axis);
+           //the y location the scale is mapped to on screen
+            brushableScale = d3.scale.linear()
+				.domain([scaleMin, scaleMax])
+				.range([350, 50]);
+            brushableAxis = d3.svg.axis()
+                    .scale(brushableScale)
+                    .orient("left")
+                
+            svg.append("g")
+            .attr("class", "axis")
+            .transition().duration(500)
+            .attr("transform", "translate(30, 0)")
+            .call(brushableAxis);
             
-            //initializing brush on the x axis
-            brush = d3.svg.brush()
-            .x(xScale)
-            .extent([0, 0])
+             brush = d3.svg.brush()
+            .y(brushableScale)
+            .on("brushstart", brushstart)
             .on("brush", brushed)
             .on("brushend", brushend);
-           
-            //display x axis
+            
             svg.append("g")
-            .attr("class", "xAxis")
-            .attr("transform", "translate(0, 670)")
-			.call(d3.svg.axis()
-                .scale(xScale)
-                .orient("bottom"))
-             .select(".domain")
-             .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-              .attr("class", "halo");
-              
-             //initializing slider for brushing
-            slider = svg.append("g")
-            .attr("class", "slider")
-            .call(brush);
-            slider.selectAll(".extent,.resize")
-                .remove();
-            slider.select(".background")
-                .attr("height", 40);
+                .attr("class", "brush")
+                .attr("transform", "translate(30, 0)")
+                .call(brush)
+                .selectAll(".brush rect")
+                .attr("x", -10)
+                .attr("width", 20);
+            xScale = d3.scale.linear()
+            .domain([2000, 2010])
+            .range([30, screen.width/2.2]);
+            xScale2 = d3.scale.linear()
+            .domain([2000, 2010])
+            .range([30, screen.width/2.6]);
+			//display the axis using the scale just calcualted at the left position x: 100, y: 0
+            xAxis = d3.svg.axis()
+                    .scale(xScale)
+                    .orient("bottom")
+            svg.append("g")
+                .attr("class", "xAxis")
+                .attr("transform", "translate(0, 350)")
+                .call(xAxis);
+            //initializing brush on the x axis
+           
+          
+          svg2 = d3.select(".svg2-container svg");
+          //calculate the scale
+			//a common scale of 0 to 100 is used for all three line charts since we are dealing with percentage
+			//result stored in the global variable
+			//display the axis using the scale just calcualted at the left position x: 100, y: 0
+            
+            scale = d3.scale.linear()
+            .domain([0, 100])
+            .range([360, 50]);
+            axis = d3.svg.axis()
+            .orient("left")
+            .scale(scale)
+            xAxis2 = d3.svg.axis()
+                    .scale(xScale2)
+                    .orient("bottom")
+            svg2.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(30, 0)")
+            .call(axis);
+            svg2.append("g")
+                    .attr("class", "xAxis")
+                    .attr("transform", "translate(0, 360)")
+                    .call(xAxis2);
+		   var legend2 = svg2.selectAll(".legend")
+            .data(legendList)
+            .enter().append("g")
+            .attr("class", "legend");
+            
+            legend2.append("rect")
+            .attr("x", function(d,i){
+                return 200 + i*80;
+            })
+            .attr("width", 10)
+            .attr("height", 10)
+            .style("fill", function(d){
+                return d.color;
+            })
+            
+            legend2.append("text")
+            .attr("x", function(d, i){
+                return 215 + i *80;
+            })
+            .attr("y", 5)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.Type;})
+            
+            svg3 = d3.select(".svg3-container svg");
+                duoxScale = d3.scale.linear()
+                .domain([2000, 2010])
+                .range([50, screen.width*0.9]);
+                //draw the two axies
+                //the same as the national line chart
+                axis = d3.svg.axis()
+                    .orient("left")
+                    .scale(scale)
+                    svg3.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(40, -10)")
+                    .call(axis);
+                xAxis = d3.svg.axis()
+                .scale(duoxScale)
+                .orient("bottom")
+                svg3.append("g")
+                .attr("class", "xAxis")
+                .attr("transform", "translate(10, 350)")
+                .call(xAxis);
                 
-             //initializing handle for the slider
-            handle = slider.append("circle")
-                .attr("class", "handle")
-                .attr("transform", "translate(0,670)")
-                .attr("r", 9);
-            slider.call(brush.event)
-                .transition() // gratuitous intro!
-                    .duration(750)
-                    .call(brush.extent([70, 70]))
-                    .call(brush.event);
-		}//end of drawScale
-		
+                
+            var legend3 = svg3.selectAll(".legend")
+            .data(legendList2)
+            .enter().append("g")
+            .attr("class", "legend");
+            
+            legend3.append("rect")
+            .attr("x", function(d,i){
+                return 600 + i*70;
+            })
+            .attr("width", 10)
+            .attr("height", 10)
+            .style("fill", function(d){
+                return d.color;
+            })
+            
+            legend3.append("text")
+            .attr("x", function(d, i){
+                return 615 + i *70;
+            })
+            .attr("y", 5)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.Type;})
+        }//end of drawScale
+
+        function brushstart(){
+            scaleMin = 0;
+            scaleMax = 100;
+            brushableScale.domain([scaleMin, scaleMax]);
+            svg.select(".axis").call(brushableAxis);
+            drawPath(datasetTotal);
+           
+        }
+        
        //called when user is performing brushing
        function brushed() {
-            var value = brush.extent()[1];
-            if (d3.event.sourceEvent) { // not a programmatic event
+       
+                 if (d3.event.sourceEvent) { // not a programmatic event
+                    scaleMin = brush.empty()? 0 : d3.round(brush.extent()[0], 0);
+                    scaleMax = brush.empty()? 100 : d3.round(brush.extent()[1], 0);
+                 }
+               
                 
-                //ser the max and min value user can brush on the slider
-                if(d3.mouse(this)[0] > 70 && d3.mouse(this)[0] < 1300){
-                    //set the position of the handle to the mouse position
-                    value = d3.mouse(this)[0];
-                }else if (d3.mouse(this)[0] <= 70){
-                    value = 70;
-                }else{
-                    value = 1300;
-                }
-                brush.extent([value, value]);
-            }
                 
-                handle.attr("cx", value);
             }
         function brushend() {
-            var year;
-            if (!d3.event.sourceEvent) {
-                return; // only transition after input
-            }
-            var value = brush.extent()[1];                    
-             if (d3.event.sourceEvent) { // not a programmatic event
-                if(d3.mouse(this)[0] > 70 && d3.mouse(this)[0] < 1300){
-                    value = d3.mouse(this)[0];
-                    
-                    //below is how I did snapping for different years
-                    //since I was using ordinal scale for years, I could not figure out how should I do round up/down
-                    //so I did it manually, but I am expecting there is a much better way of doing it
-                    if(value >= 70 && value <= 130){
-                        value = 70;
-                        year = "2000";
-                    }else if (value >= 130 && value < 252 ){
-                        value = 190;
-                        year = "2001";
-                    }else if (value >= 252 && value < 377){
-                        value = 315;
-                        year = "2002";
-                    }else if (value >= 377 && value < 500){
-                        value = 440;
-                        year = "2003";
-                    }else if (value >= 500 && value < 623){
-                        value = 560;
-                        year = "2004";
-                    }else if(value >= 623 && value < 748){
-                        value = 686;
-                        year = "2005";
-                    }else if(value >= 748 && value < 873){
-                        value = 810;
-                        year = "2006";
-                    }else if (value >= 873 && value < 996){
-                        value = 936;
-                        year = "2007";
-                    }else if (value >= 996 && value < 1119){
-                        value = 1057;
-                        year = "2008";
-                    }else if (value >= 1119 && value < 1241){
-                        value = 1182;
-                        year = "2009";
-                    }else{
-                        value = 1300;
-                        year = "2010";
-                    }
-                }else if (d3.mouse(this)[0] <= 70){
-                    value = 70;
-                    year = "2000";
-                }else{
-                    value = 1300;
-                     year = "2010";
-                }
-                 brush.extent([value, value]);
-                 //call function to display the national histogram
-                 loadSelection(year);
-            } 
-             
-             console.log(value);
-            
+             brushableScale.domain([scaleMin, scaleMax]);
+             svg.select(".axis").call(brushableAxis);
+             drawPath(datasetTotal);
         }
         
         //load data for the national histogram
-        function loadSelection(year){
-               var dataset2 = [];
-               for(var i = 0; i < dataset.length; i++){
-                var datapoint = new Object();
-                datapoint[keyArray[11]] = dataset[i][keyArray[11]];
-                datapoint[year] = dataset[i][year];
-                dataset2.push(datapoint);
-                
-            }
-            //console.log(dataset2);
-            //call function to draw the national histogram
-            drawAnotherHist(dataset2, year);
-        }
         
 		//the function draws a path for each data point
 		//also update the path if user made a new selection
@@ -233,24 +371,296 @@ var selectedCountry;//global variable to link the two national visualization
                 })   
             svg.call(tip);  
 			var str = "";
-			pathes = svg.selectAll("path")
+			pathes = svg.selectAll(".pathes")
 			.data(points)
 			.enter()
-			.append("path")
+            .append("g")
+            .attr("class", "pathes");
+            pathes.append("path")
 			.attr({
 				//set the path position
 				d:function(d, i){
 					//all pathes shares the same beginning x position which is the year of 2000
 					//the y position is determined by the data scaled to the scale we are using
-					str = "M65 " + scale(d[keyArray[0]]);
+					//str = "M30 " + brushableScale(d[keyArray[0]]);
+                    //str = "M30";
 					//loop through all years (2001 - 2009) exclude data from 2000
 					//and the last one which is the name of the country
-					for(var i = 1; i < keyArray.length-1; i++){
+					for(var i = 0; i < keyArray.length-3; i++){
 						//all the empty cells in the datasheet is set to be - 99
 						//only draw lines when there is data in the cell
-                        if(+d[keyArray[i]] >= 0){
+                        if(brushableScale(+d[keyArray[i]]) >= 50 && brushableScale(+d[keyArray[i]]) <= 350){
 							//the y position increases 100 every other year
-						  str += " L" + ((screen.width - 60) / 10) *i + " " + scale(+d[keyArray[i]]);
+                          if(str == ""){
+                              str = "M30 " + brushableScale(+d[keyArray[i]]);
+                          }else{  
+						      str += " L" + ((screen.width / 2.2) / 10) *i + " " + brushableScale(+d[keyArray[i]]);
+                        }    
+                        } else{
+                                
+                            }
+                        }
+                        return str;
+				},
+				//set the style of the path
+                stroke:"black",
+                "stroke-opacity":0.4
+			})
+			//call the updatePath function when user hover over a line on the chart
+            //also shows a tooltip which display the name of the country that the line represents
+             .on("mouseover", function(d, i){
+                 if(regionSelected == null || regionSelected == "All"){
+                    tip.show(d)
+                    selectedCountry = d[keyArray[11]];
+                    updatePath();
+                }else{
+                    if(d[keyArray[13]] == regionSelected){
+                         tip.show(d)
+                        selectedCountry = d[keyArray[11]];
+                        updatePath();
+                    }
+                }
+
+                 
+             })
+             //click to display the urban histogram of the selected country
+             .on("click" ,function(d){
+                 if(regionSelected == null || regionSelected == "All"){
+         
+                    selectedCountry = d[keyArray[11]];
+                    loadSelection();
+                }else{
+                    if(d[keyArray[13]] == regionSelected){
+                        selectedCountry = d[keyArray[11]];
+                        loadSelection();
+                    }
+                }
+             })
+             //hide the tooltip when mouse leaves the line
+             .on('mouseout', function(d){
+                 tip.hide(d);
+             })
+             
+             svg.selectAll(".pathes path")
+            .data(points)
+            .transition().duration(200)
+			.attr({
+				d:function(d, i){
+                     str  = "";
+					//loop through all years (2001 - 2009) exclude data from 2000
+					//and the last one which is the name of the country
+					for(var i = 1; i < keyArray.length-3; i++){
+						//all the empty cells in the datasheet is set to be - 99
+						//only draw lines when there is data in the cell
+                        if(brushableScale(+d[keyArray[i]]) >= 50 && brushableScale(+d[keyArray[i]]) <= 350){
+							//the y position increases 100 every other year
+                          if(str == ""){
+                              str = "M30 " + brushableScale(+d[keyArray[i]]);
+                          }else{  
+						      str += " L" + (30 + 59 *i) + " " + brushableScale(+d[keyArray[i]]);
+                        }    
+                        } else{
+                                
+                            }
+                        }
+					return str;
+				},
+                 stroke:"black",
+                "stroke-opacity":0.4
+			})
+		}
+        
+        function loadRegion(region){
+            regionSelected = region;
+                svg.selectAll(".pathes path")
+                .transition().duration(200)
+                .attr({
+                    
+                    //hover over set the path to red, otherwise black
+                    stroke: function(d){
+                        if(d[keyArray[13]] == region){
+                            return "#2A5769";
+                        }
+                        else{
+                            return "#BAB09E";
+                        }
+                    },
+                    //hover over set the path to full opacity, otherwise low opacity
+                    "stroke-opacity":function(d){
+                        if(d[keyArray[13]] == region){
+                            return "1";
+                        }else{
+                            return "0.4";
+                        }
+                    }
+                    //hover over set the path to be thicker, otherwise skinner
+                })
+        }
+		
+        function drawNationalDots(points){
+            var tip = d3.tip()
+            .attr("class", "d3-tip")
+            .offset([-5,0])
+            .html(function(d) {
+                    
+                    return "<strong>Value:</strong> <span style='color:red'>" + d.value + "</span>";
+                    
+                })   
+            svg2.call(tip);  
+            var dots = svg2.selectAll(".nationaldot")
+            .data(points)
+            .enter()
+            .append("g")
+            .attr("class", "nationaldot");
+            dots.append("circle")
+            .attr("r", 3.5)
+            .attr("cx", function(d){
+                return xScale2(+d.year);
+            })
+            .attr("cy", function(d){
+                return scale(d.value);
+            })
+             .on("mouseover", function(d, i){
+                 tip.show(d)
+           
+                 
+             })
+             .on('mouseout', function(d){
+                 tip.hide(d);
+             })
+            .style("fill", "red");
+          
+          dots = svg2.selectAll(".nationaldot circle")
+          .data(points)
+          .transition().duration(200)
+          .attr("r", 3.5)
+            .attr("cx", function(d){
+                return xScale2(+d.year);
+            })
+            .attr("cy", function(d){
+                return scale(d.value);
+            })
+            .style("fill", "red")
+            .style("stroke", "1px black solid");
+           
+        }
+        function drawUrbanDots(points){
+            var tip = d3.tip()
+            .attr("class", "d3-tip")
+            .offset([-5,0])
+            .html(function(d) {
+                    
+                    return "<strong>Value:</strong> <span style='color:red'>" + d.value + "</span>";
+                    
+                })   
+            svg2.call(tip);  
+            var dots = svg2.selectAll(".urbandot")
+            .data(points)
+            .enter()
+            .append("g")
+            .attr("class", "urbandot");
+            dots.append("circle")
+            .attr("r", 3.5)
+            .attr("cx", function(d){
+                return xScale2(+d.year);
+            })
+            .attr("cy", function(d){
+                return scale(d.value);
+            })
+             .on("mouseover", function(d, i){
+                 tip.show(d)
+           
+                 
+             })
+             .on('mouseout', function(d){
+                 tip.hide(d);
+             })
+            .style("fill", "red");
+          
+          dots = svg2.selectAll(".urbandot circle")
+          .data(points)
+          .transition().duration(200)
+          .attr("r", 3.5)
+            .attr("cx", function(d){
+                return xScale2(+d.year);
+            })
+            .attr("cy", function(d){
+                return scale(d.value);
+            })
+            .style("fill", "red");
+        }
+        
+        function drawRuralDots(points){
+             var tip = d3.tip()
+            .attr("class", "d3-tip")
+            .offset([-5,0])
+            .html(function(d) {
+                    
+                    return "<strong>Value:</strong> <span style='color:red'>" + d.value + "</span>";
+                    
+                })   
+            svg2.call(tip);  
+            var dots = svg2.selectAll(".ruraldot")
+            .data(points)
+            .enter()
+            .append("g")
+            .attr("class", "ruraldot");
+            dots.append("circle")
+            .attr("r", 3.5)
+            .attr("cx", function(d){
+                return xScale2(+d.year);
+            })
+            .attr("cy", function(d){
+                return scale(d.value);
+            })
+            .on("mouseover", function(d, i){
+                 tip.show(d)
+           
+                 
+             })
+             .on('mouseout', function(d){
+                 tip.hide(d);
+             })
+            .style("fill", "red");
+          
+          dots = svg2.selectAll(".ruraldot circle")
+          .data(points)
+          .transition().duration(200)
+          .attr("r", 3.5)
+            .attr("cx", function(d){
+                return xScale2(+d.year);
+            })
+            .attr("cy", function(d){
+                return scale(d.value);
+            })
+            .style("fill", "red");
+        }
+        function drawCountryPath(points){
+            
+            document.getElementsByTagName("h3")[0].innerHTML = "Proportion of the population using improved drinking water sources of " + selectedCountry;  
+            var str = "";
+			console.log(points);
+            var urbanpath = svg2.selectAll(".pathes")
+			.data(points)
+			.enter()
+            .append("g")
+            .attr("class", "pathes");
+            
+			urbanpath.append("path")
+			.attr({
+				//set the path position
+				d:function(d, i){
+					//all pathes shares the same beginning x position which is the year of 2000
+					//the y position is determined by the data scaled to the scale we are using
+					str = "M30 " + scale(+d[keyArray2[0]]);
+					//loop through all years (2001 - 2009) exclude data from 2000
+					//and the last one which is the name of the country
+					for(var i = 1; i < keyArray2.length-3; i++){
+						//all the empty cells in the datasheet is set to be - 99
+						//only draw lines when there is data in the cell
+                        if(+d[keyArray2[i]] >= 0){
+							//the y position increases 100 every other year
+						  str += " L" + (30 + 49.5*i) + " " + scale(+d[keyArray2[i]]);
                         } else{
 							//log the name of the country and the year of the cell that is missing data
                             //console.log("missing data from country " + d[keyArray[11]] + 
@@ -260,254 +670,131 @@ var selectedCountry;//global variable to link the two national visualization
 					return str;
 				},
 				//set the style of the path
-                stroke:"black",
-                "stroke-opacity":0.4
+                stroke:function(d){
+                 if(d3.keys(d)[11].includes("total")){
+                     return "black";
+                     
+                 }else if (d3.keys(d)[11].includes("urban")){
+                     return "blue";
+                 }else{
+                     return "orange";
+                 }   
+                },
+                "stroke-width":1
 			})
-			//call the updatePath function when user hover over a line on the chart
-            //also shows a tooltip which display the name of the country that the line represents
-             .on("mouseover", function(d, i){
-                 tip.show(d)
-                 selectedCountry = d[keyArray[11]];
-                 updatePath();
-                 updateBar();
-                 
+           var text = svg2.selectAll(".update")
+           .data(points)
+           .enter()
+           .append("g")
+           .attr("class", "update");
+           
+            text.append("text")
+            .attr("transform", function(d){
+                return "translate(532," + scale(d[keyArray2[10]])+3  + " )";
+            })
+            .text(function(d){
+                return "Rate of Change: " + d["Rate of Change"];
+            })
+             svg2.selectAll(".pathes path")
+             .data(points)
+             .transition().duration(200)
+             .attr({
+                 //set the path position
+				d:function(d, i){
+					//all pathes shares the same beginning x position which is the year of 2000
+					//the y position is determined by the data scaled to the scale we are using
+					str = "M30 " + scale(d[keyArray2[0]]);
+					//loop through all years (2001 - 2009) exclude data from 2000
+					//and the last one which is the name of the country
+					for(var i = 1; i < keyArray2.length-3; i++){
+						//all the empty cells in the datasheet is set to be - 99
+						//only draw lines when there is data in the cell
+                        if(+d[keyArray2[i]] >= 0){
+							//the y position increases 100 every other year
+						  str += " L" + (30 + 49.5*i)  + " " + scale(+d[keyArray2[i]]);
+                        } else{
+							
+                        }
+					}
+					return str;
+				},
+				//set the style of the path
+                stroke:function(d){
+                 if(d3.keys(d)[11].includes("total")){
+                     return "black";
+                     
+                 }else if (d3.keys(d)[11].includes("urban")){
+                     return "blue";
+                 }else{
+                     return "orange";
+                 }   
+                },
+                "stroke-width":1
              })
-             //click to display the urban histogram of the selected country
-             .on("click" ,function(d){
-                  selectedCountry = d[keyArray[11]];
-                  loadUrbanSelection();
-             })
-             //hide the tooltip when mouse leaves the line
-             .on('mouseout', function(d){
-                 tip.hide(d);
-             })
-		}
-		
+             svg2.selectAll(".update text")
+             .data(points)
+             .attr("transform", function(d){
+                return "translate(532," + (scale(d[keyArray2[10]])+2)  + " )";
+            })
+            .text(function(d){
+                return "Rate of Change: " + d["Rate of Change"];
+            })
+
+        }
 		//this function changes the style of the path when user hover over it
         function updatePath(){
-            svg.selectAll("path")
+            svg.selectAll(".pathes path")
             .transition().duration(200)
             .attr({
                 
 				//hover over set the path to red, otherwise black
 				stroke: function(d){
-					if(d[keyArray[11]] == selectedCountry){
+					if(d[keyArray[11]] == selectedCountry && (regionSelected == null || regionSelected == "All")){
 						return "#FF0000";
-					}else{
+					}else if(d[keyArray[13]] == regionSelected){
+                        if(d[keyArray[11]] == selectedCountry){
+                            return "#2A5769";
+                        }else{
+                             return "#2A5769";
+                        }
+                    }
+                    else{
 						return "#BAB09E";
 					}
 				},
 				//hover over set the path to full opacity, otherwise low opacity
 				"stroke-opacity":function(d){
-					if(d[keyArray[11]] == selectedCountry){
+					if(d[keyArray[11]] == selectedCountry && (regionSelected == null || regionSelected == "All")){
 						return "1";
-					}else{
+					}else if(d[keyArray[13]] == regionSelected){
+                        if(d[keyArray[11]] == selectedCountry){
+                            return "#1";
+                        }else{
+                             return "0.6";
+                        }
+                    }else{
 						return "0.4";
 					}
 				},
 				//hover over set the path to be thicker, otherwise skinner
 				"stroke-width":function(d){
-					if(d[keyArray[11]] == selectedCountry){
-						return "4";
-					}else{
+					if(d[keyArray[11]] == selectedCountry && (regionSelected == null || regionSelected == "All")){
+						return "3";
+					}else if(d[keyArray[11]] == selectedCountry && d[keyArray[13]] == regionSelected){
+                        return "3";
+                    }
+                    else{
 						return "1";
 					}
 				}
 			})
             
         }//end of updatePath
-        
-        //draws the second visualization which is the national histogram
-        //controlled by the brush in the first visualization
-         function drawAnotherHist(points, year){
-            for(var i = 0; i < points.length; i++){
-                countryArray[i] = points[i][keyArray[11]];
-            }
-            document.getElementsByTagName("h3")[0].innerHTML = keyArray[11] + " of the year " + year;
-
-            //initializing svg elements
-            svg2 = d3.select(".svg2-container svg");
-             axis = d3.svg.axis()
-                .orient("left")
-                .scale(scale)
-                svg2.append("g")
-                .attr("class", "axis")
-                .attr("transform", "translate(60, 0)")
-                .call(axis);               
-            //initializing the scale for all countries
-            countryScale = d3.scale.ordinal()
-            .domain(countryArray)
-            .rangePoints([65, screen.width-60]);
-            countryAxis = d3.svg.axis()
-                .orient("bottom")
-                .scale(countryScale)
-                 svg2.append("g")
-                .attr("class", "countryName")
-                .attr("transform", "translate(0, 660)")
-                .call(countryAxis);
-            
-            //initializing tootip    
-            var tip = d3.tip()
-            .attr("class", "d3-tip")
-            .offset([-10,0])
-           .html(function(d) {
-                    
-                    return "<strong>Country:</strong> <span style='color:red'>" + d[keyArray[11]] + "</span>";
-                    
-                })   
-            svg2.call(tip);  
-            
-            //initializing bar arrays
-            bars = svg2.selectAll("rect")
-            .data(points)
-            .enter()
-            .append("g")
-            .attr("class", "bar");
-            
-            //create rectagle for all data points in the bar array
-            bars.append("rect")
-            .attr("x", function(d){
-                return countryScale(d[keyArray[11]]);
-            })
-            .attr("y", function(d){
-                return scale(d[year]);
-            })
-            .attr("width", "2")
-            .attr("height", function(d){
-                if(650 - scale(d[year]) > 0){
-                    return  650 - scale(d[year]);
-                }else{
-                    console.log("missing data from country " + d[keyArray[11]] + 
-                            "in the year " + year);
-                }
-            })
-             
-             //handles user inputs
-             //changes color and thickness
-             //also display a tooltip of the country name the bar represents
-             //the corresponding bar in the national line chart will also be hightlighted
-             .on("mouseover", function(d, i){
-                 selectedCountry = d[keyArray[11]];
-                 updateBar();
-                 updatePath();
-                 tip.show(d);
-             })
-              .on("click" ,function(d){
-                  selectedCountry = d[keyArray[11]];
-                  loadUrbanSelection();
-             })
-             .on('mouseout', function(d){
-                 tip.hide(d);
-             })
-             //update all bars when user select a different year
-              bars = svg2.selectAll("rect")
-              .data(points)
-             .transition().duration(1000)
-             .attr("x", function(d){
-                return countryScale(d[keyArray[11]]);
-            })
-            .attr("y", function(d){
-                return scale(d[year]);
-            })
-            .attr("width", "2")
-            .attr("height", function(d){
-                if(650 - scale(d[year]) > 0){
-                    return  650 - scale(d[year]);
-                }else{
-                    console.log("missing data from country " + d[keyArray[11]] + 
-                            "in the year " + year);
-                }
-            })
-           
-        }
-        
-        //handles style of the bars
-        function updateBar(){
-             svg2.selectAll("rect")
-                .transition().duration(200)
-                .attr({
-                    fill: function(d){
-					if(d[keyArray[11]] == selectedCountry){
-						return "#FF0000";
-					}else{
-						return "#BAB09E";
-					}
-				},
-                width:function(d){
-                    if(d[keyArray[11]] == selectedCountry){
-						return "5";
-					}else{
-						return "2";
-					}
-                }
-             })
-        }
-        
         //load data from the second source when user click any line or bar in either the national line chart or the national histogram
-        function loadUrbanSelection(){
-            var row = [];
-            var datasetUrban = [];
-            d3.csv("http://www.sfu.ca/~yitingl/data/urban.csv")
-            .row(function(d){
-			    return d;
-            })
-			//error checking 
-            .get(function(error, points){
-                if(error){
-                    console.error("Error occured while reading file. " + error);
-                }else{
-					//alert user that the file loaded successfully
-					//store all data points into the array
-                    datasetUrban = points;
-                    //stores keys of the second dataset into the another key array
-                    keyArray2 = d3.keys(points[0]);
-                    // loop through the second dataset to find the row of the selected country
-                    datasetUrban.forEach (function(d){
-                        if(d[keyArray2[11]] == selectedCountry){
-                           for(var i = 0; i < keyArray.length - 1; i ++){
-                               //fill up the row with the values of the country
-                               var datapoint = new Object();
-                               datapoint.year = keyArray2[i];
-                               datapoint.value = d[keyArray2[i]];
-                               row.push(datapoint);
-                           }
-                        }else{
-                            console.log("didnt found")
-                        }
-                    });
-                    
-                    //call function to draw the urban histogram of the selected country
-                     drawUrbanHistogram(row);
-                     //console.log(row);
-                }
-            });
-           
-        }
-        
+       
         //draws the scale and the histogram of the urban propotion of the selected country
         function drawUrbanHistogram(row){
-           //set the title of the third visualization
-            document.getElementsByTagName("h4")[0].innerHTML = keyArray2[11] + " of the country " + selectedCountry;
-            //initializing svg elements
-            svg3 = d3.select(".svg3-container svg");
-            
-            //draw the two axies
-            //the same as the national line chart
-            axis = d3.svg.axis()
-				.orient("left")
-				.scale(scale)
-				svg3.append("g")
-				.attr("class", "axis")
-				.attr("transform", "translate(60, 0)")
-				.call(axis);
-            xAxis = d3.svg.axis()
-            .scale(xScale)
-            .orient("bottom")
-            svg3.append("g")
-            .attr("class", "xAxis")
-		    .attr("transform", "translate(10, 660)")
-			.call(xAxis);
-            
+            document.getElementsByTagName("h4")[0].innerHTML = "Proportion of the population using improved drinking water sources, urban and rural of the country " + selectedCountry;
             //initializing tooltip which display the value of the bar
             var tip = d3.tip()
             .attr("class", "d3-tip")
@@ -520,7 +807,7 @@ var selectedCountry;//global variable to link the two national visualization
             svg3.call(tip); 
              
              //initializing countrybar array with datapoints
-            countryBars = svg3.selectAll("rect")
+            countryBars = svg3.selectAll(".bar")
             .data(row)
             .enter()
             .append("g")
@@ -529,22 +816,24 @@ var selectedCountry;//global variable to link the two national visualization
             //add rectagle for each datapoints in the countryBars array
             countryBars.append("rect")
             .attr("x", function(d){
-                return xScale(d.year);
+                return duoxScale(d.year) - 10;
             })
             .attr("y", function(d){
                 return scale(d.value);
             })
             .attr("width", "20")
             .attr("height", function(d){
-                if(660 - scale(d.value) > 0){
-                    return  660 - scale(d.value);
+                if(350 - scale(d.value) > 0){
+                    return  350 - scale(d.value);
                 }else{
                     console.log("missing data from country " + selectedCountry + 
                             "in the year " + d.year);
                 }
             //handle user interactions
             //display tooltip, change color and thickness
-            }).on("mouseover", function(d, i){
+            })
+            .attr("opacity", "0.5")
+            .on("mouseover", function(d, i){
                  tip.show(d)
                  updateUrbanBar(d.year);
                  
@@ -554,50 +843,142 @@ var selectedCountry;//global variable to link the two national visualization
                  svg3.selectAll("rect")
                 .transition().duration(200)
                 .attr({
-                    fill: "#000",
-                    width: "20"
+                   opacity:"0.5"
              })
              })
-             console.log(row);
+             //console.log(row);
              //update all bars when user select another country
-            countryBars=svg3.selectAll("rect")
+            countryBars = svg3.selectAll(".bar rect")
             .data(row)
             .transition().duration(1000)
             .attr("x", function(d){
-                return xScale(d.year);
+                return duoxScale(d.year)-10;
             })
             .attr("y", function(d){
                 return scale(d.value);
             })
             .attr("width", "20")
             .attr("height", function(d){
-                if(660 - scale(d.value) > 0){
-                    return  660 - scale(d.value);
+                if(350 - scale(d.value) > 0){
+                    return  350 - scale(d.value);
                 }else{
                     console.log("missing data from country " + selectedCountry + 
                             "in the year " + d.year);
                 }
             })
+            .attr("opacity", "0.5")
         }
         
         //handle styling of the third visualziation
         function updateUrbanBar(year){
-            svg3.selectAll("rect")
+            svg3.selectAll(".bar rect")
                 .transition().duration(200)
                 .attr({
-                    fill: function(d){
+                    opacity: function(d){
 					if(d.year == year){
-						return "#FF0000";
+						return "1";
 					}else{
-						return "#000";
+						return "0.5";
 					}
-				},
-                width:function(d){
-                    if(d.year == year){
-						return "30";
-					}else{
-						return "20";
-					}
+				}
+                })
+              
+        }
+        
+     
+         //draws the scale and the histogram of the urban propotion of the selected country
+        function drawRuralHistogram(row){
+           //set the title of the third visualization
+           // document.getElementsByTagName("h4")[0].innerHTML = keyArray3[11] + " of the country " + selectedCountry;
+            //initializing svg elements
+           
+            //draw the two axies
+            //the same as the national line chart
+            var tip = d3.tip()
+            .attr("class", "d3-tip")
+            .offset([-5,0])
+            .html(function(d) {
+                    
+                    return "<strong>Value:</strong> <span style='color:red'>" + d.value + "</span>";
+                    
+                })   
+            svg3.call(tip); 
+             
+             //initializing countrybar array with datapoints
+            moreCountryBars = svg3.selectAll(".moreBar")
+            .data(row)
+            .enter()
+            .append("g")
+            .attr("class", "moreBar");
+            
+            //add rectagle for each datapoints in the countryBars array
+            moreCountryBars.append("rect")
+            .attr("x", function(d){
+                return duoxScale(d.year) + 10;
+            })
+            .attr("y", function(d){
+                return scale(d.value);
+            })
+            .attr("width", "20")
+            .attr("height", function(d){
+                if(350 - scale(d.value) > 0){
+                    return  350 - scale(d.value);
+                }else{
+                    console.log("missing data from country " + selectedCountry + 
+                            "in the year " + d.year);
                 }
+            //handle user interactions
+            //display tooltip, change color and thickness
+            })
+            .attr("opacity", "0.5")
+            .on("mouseover", function(d, i){
+                 tip.show(d)
+                 updateRuralBar(d.year);
+                 
              })
+             .on('mouseout', function(d){
+                 tip.hide(d);
+                 svg3.selectAll("rect")
+                .transition().duration(200)
+                .attr({
+                    opacity:"0.5"
+             })
+             })
+             //console.log(row);
+             //update all bars when user select another country
+            moreCountryBars = svg3.selectAll(".moreBar rect")
+            .data(row)
+            .transition().duration(1000)
+            .attr("x", function(d){
+                return duoxScale(d.year)+10;
+            })
+            .attr("y", function(d){
+                return scale(d.value);
+            })
+            .attr("width", "20")
+            .attr("height", function(d){
+                if(350 - scale(d.value) > 0){
+                    return  350 - scale(d.value);
+                }else{
+                    console.log("missing data from country " + selectedCountry + 
+                            "in the year " + d.year);
+                }
+            })
+            .attr("opacity", "0.5")
+        }
+        
+        //handle styling of the third visualziation
+        function updateRuralBar(year){
+            svg3.selectAll(".moreBar rect")
+                .transition().duration(200)
+                .attr({
+                    opacity: function(d){
+					if(d.year == year){
+						return "1";
+					}else{
+						return "0.5";
+					}
+				}
+                })
+              
         }
